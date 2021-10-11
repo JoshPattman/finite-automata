@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -25,7 +26,7 @@ func main() {
 		"01",
 		"011",
 		"100",
-	})*/
+	})
 
 	demoNFA(nfaNoBStartNo4BSeq(), []string{
 		"ababab",
@@ -36,7 +37,11 @@ func main() {
 		"abababaaa",
 		"baaaa",
 		"abbbbaaa",
-	})
+	})*/
+
+	a := nfaWithEpsilon()
+	js, _ := json.MarshalIndent(a, "", "\t")
+	fmt.Println(string(js))
 }
 
 

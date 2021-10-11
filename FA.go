@@ -5,22 +5,22 @@ import (
 	"strings"
 )
 
-type FA struct{
-	states []string
-	alphabet []rune
-	transitionFunction []string // []string{"a,b:c","d,e:f"}
-	startState string
-	endStates []string
+type FA struct {
+	States             []string `json:"states"`
+	Alphabet           string   `json:"alphabet"`
+	TransitionFunction []string `json:"transition_function"` // []string{"a,b:c","d,e:f"}
+	StartState         string   `json:"start_state"`
+	EndStates          []string `json:"end_states"`
 }
 
 func NewFA(states []string, alphabet []rune, transitionFunction []string, startState string, endStates []string) FA{
 	blacklistRunes := []rune("+: ,~")
 	if anyInRuneList(blacklistRunes, alphabet){
-		panic("Cannot use that alphabet, it contains blacklisted character")
+		panic("Cannot use that Alphabet, it contains blacklisted character")
 	}
 
 	if !inList(startState, states){
-		panic("Start state not in list of states")
+		panic("Start state not in list of States")
 	}
 
 	allEndStatesInStates := true
@@ -30,12 +30,12 @@ func NewFA(states []string, alphabet []rune, transitionFunction []string, startS
 		}
 	}
 	if !allEndStatesInStates{
-		panic("One or more of the end states does not exist in the states list")
+		panic("One or more of the end States does not exist in the States list")
 	}
 
 	return FA{
 		states,
-		alphabet,
+		string(alphabet),
 		transitionFunction,
 		startState,
 		endStates,
@@ -43,17 +43,17 @@ func NewFA(states []string, alphabet []rune, transitionFunction []string, startS
 }
 
 func (fa FA) ToDFA() FA{
-	// Find the start state and merge it with all states that can be reached with an epsilon transition
-	startEpsilonState := combineStates(append([]string{fa.startState}, findStates(fa.transitionFunction, fa.startState+",~")...))
-	// Create a new finite automata with the alphabet and new start state
+	// Find the start state and merge it with all States that can be reached with an epsilon transition
+	startEpsilonState := combineStates(append([]string{fa.StartState}, findStates(fa.TransitionFunction, fa.StartState+",~")...))
+	// Create a new finite automata with the Alphabet and new start state
 	fa1 := FA{
 		make([]string, 0),
-		fa.alphabet,
+		fa.Alphabet,
 		make([]string, 0),
 		startEpsilonState,
 		make([]string, 0),
 	}
-	// This is the current state we are scanning and a queue of the states we need to check
+	// This is the current state we are scanning and a queue of the States we need to check
 	currentState := ""
 	statesToDo := []string{startEpsilonState}
 
@@ -62,33 +62,33 @@ func (fa FA) ToDFA() FA{
 		// pop a state from the queue
 		currentState, statesToDo = pop(statesToDo)
 		// If the state we are checking has already been checked, ignore
-		if !inList(currentState, fa1.states) {
+		if !inList(currentState, fa1.States) {
 			// split the state into its substates (eg a+c -> [a, c])
 			subStates := splitStates(currentState)
 			// check if the state is final
-			if anyInList(fa.endStates, subStates){
-				fa1.endStates = append(fa1.endStates, currentState)
+			if anyInList(fa.EndStates, subStates){
+				fa1.EndStates = append(fa1.EndStates, currentState)
 			}
-			// add this state to the new dfa's list of states
-			fa1.states = append(fa1.states, currentState)
-			// for every letter in the alphabet, find and combine all the reachable states, add that new state to the queue, and create a transition to it
-			for _, l := range fa1.alphabet {
+			// add this state to the new dfa's list of States
+			fa1.States = append(fa1.States, currentState)
+			// for every letter in the Alphabet, find and combine all the reachable States, add that new state to the queue, and create a transition to it
+			for _, l := range fa1.Alphabet {
 				reachableStates := make([]string, 0)
-				// for every substate find all the reachable states and add them to our list of all reachable states (for this state and letter)
+				// for every substate find all the reachable States and add them to our list of all reachable States (for this state and letter)
 				for _, s := range subStates {
 					fx := s + "," + string(l)
-					thisReachableStates := findStates(fa.transitionFunction, fx)
+					thisReachableStates := findStates(fa.TransitionFunction, fx)
 					reachableStates = append(reachableStates, thisReachableStates...)
 				}
-				// create a new list of reachable states, but include epsilon reachable states
+				// create a new list of reachable States, but include epsilon reachable States
 				reachableStatesIncludingEpsilon := make([]string, 0)
 				for _, state := range reachableStates{
 					reachableStatesIncludingEpsilon = append(reachableStatesIncludingEpsilon, state)
-					reachableStatesIncludingEpsilon = append(reachableStatesIncludingEpsilon, findStates(fa.transitionFunction, state+",~")...)
+					reachableStatesIncludingEpsilon = append(reachableStatesIncludingEpsilon, findStates(fa.TransitionFunction, state+",~")...)
 				}
-				// ensure that there are no duplicates and reorder the states
+				// ensure that there are no duplicates and reorder the States
 				reachableStatesIncludingEpsilon = removeDuplicates(reachableStatesIncludingEpsilon)
-				// combine these reachable states into one new state ([a, b, c] -> a+b+c)
+				// combine these reachable States into one new state ([a, b, c] -> a+b+c)
 				newState := combineStates(reachableStatesIncludingEpsilon)
 				// create a transition from this state to the new state
 				newTransition := currentState + "," + string(l) + ":" + newState
@@ -97,7 +97,7 @@ func (fa FA) ToDFA() FA{
 					statesToDo = append(statesToDo, newState)
 				}
 				// add the transition to the new transition function. this will never be a duplicate as it is uniquely identified by this state and letter
-				fa1.transitionFunction = append(fa1.transitionFunction, newTransition)
+				fa1.TransitionFunction = append(fa1.TransitionFunction, newTransition)
 			}
 		}
 	}
@@ -106,33 +106,33 @@ func (fa FA) ToDFA() FA{
 }
 
 func (dfa FA) Evaluate(s []rune)bool{
-	currentState := dfa.startState
+	currentState := dfa.StartState
 	for len(s)>0{
 		if currentState == "EMPTY"{
 			return false
 		}
 		var c rune
 		c, s = popRune(s)
-		if !inRuneList(c, dfa.alphabet){
-			panic("Letter was not in dfa alphabet so cannot compute")
+		if !inRuneList(c, []rune(dfa.Alphabet)){
+			panic("Letter was not in dfa Alphabet so cannot compute")
 		}
 		fx := currentState+","+string(c)
-		nextStates := findStates(dfa.transitionFunction, fx)
+		nextStates := findStates(dfa.TransitionFunction, fx)
 		if len(nextStates) != 1{
 			panic("This is not a DFA so cannot calculate")
 		}
 		currentState = nextStates[0]
 	}
-	return inList(currentState, dfa.endStates)
+	return inList(currentState, dfa.EndStates)
 }
 
 func (dfa FA) String() string{
 	s := "Finite Automata:\n"
-	s += "	States: "+listToString(dfa.states)+"\n"
-	s += "	Alphabet: "+runeListToString(dfa.alphabet)+"\n"
-	s += "	Transition Function: "+ listToString(dfa.transitionFunction) + "\n"
-	s += "	Start State: " + dfa.startState + "\n"
-	s += "	End States: " + listToString(dfa.endStates)
+	s += "	States: "+listToString(dfa.States)+"\n"
+	s += "	Alphabet: "+runeListToString([]rune(dfa.Alphabet))+"\n"
+	s += "	Transition Function: "+ listToString(dfa.TransitionFunction) + "\n"
+	s += "	Start State: " + dfa.StartState + "\n"
+	s += "	End States: " + listToString(dfa.EndStates)
 	return s
 }
 
