@@ -10,8 +10,8 @@ func main() {
 	args := os.Args[1:]
 	//generate_fa_args := []string{"new", "testfa.json"}
 	//convert_fa_args := []string{"conv", "testfa.json", "dfa.json"}
-	test_fa_args := []string{"test", "dfa.json", "abababbb"}
-	args = test_fa_args
+	//test_fa_args := []string{"test", "dfa.json", "abababbb"}
+	//args = test_fa_args
 
 	cmd, args := popArg(args)
 
