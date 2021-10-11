@@ -1,0 +1,20 @@
+{
+	"states": [
+		"0",
+		"1",
+		"2",
+		"3"
+	],
+	"alphabet": "ab",
+	"transition_function": [
+		"0,a:0",
+		"0,b:0",
+		"0,b:1",
+		"1,b:2",
+		"2,b:3"
+	],
+	"start_state": "0",
+	"end_states": [
+		"3"
+	]
+}
