@@ -8,10 +8,6 @@ import (
 
 func main() {
 	args := os.Args[1:]
-	//generate_fa_args := []string{"new", "testfa.json"}
-	//convert_fa_args := []string{"conv", "testfa.json", "dfa.json"}
-	//test_fa_args := []string{"test", "dfa.json", "abababbb"}
-	//args = test_fa_args
 
 	cmd, args := popArg(args)
 
@@ -41,35 +37,13 @@ func main() {
 
 }
 
-func popArg(xs []string) (string, []string){
-	if len(xs) == 0{
-		consoleError("Incorrect command usage, please look at github for more info")
-	}
-	return xs[0], xs[1:]
-}
 
 
-func consoleError(reason string){
-	fmt.Println("Error: "+reason)
-	os.Exit(0)
-}
+
+
 
 func createEmptyFAFile(fileName string){
-	js, _ := json.MarshalIndent(nfaEmpty(), "", "\t")
-	err := os.WriteFile(fileName, js, 0644)
-	if err != nil{
-		consoleError(err.Error())
-	}
-}
-func nfaEmpty() FA{
-	fa, _ := NewFA(
-		[]string{"0"},
-		[]rune{},
-		[]string{},
-		"0",
-		[]string{"0"},
-	)
-	return fa
+	writeFAToFile(nfaEmpty(), fileName)
 }
 
 func testFiniteAutomata(filename string, s string){
@@ -87,15 +61,14 @@ func testFiniteAutomata(filename string, s string){
 
 func convertFiniteAutomata(fn1, fn2 string){
 	fa := readFAFromFile(fn1)
-	dfa := fa.ToDFA()
-	fmt.Println(fa)
-	js, _ := json.MarshalIndent(dfa, "", "\t")
-	err := os.WriteFile(fn2, js, 0644)
-	if err != nil{
-		consoleError(err.Error())
-	}
+	writeFAToFile(fa.ToDFA(), fn2)
 
 }
+
+
+
+
+
 
 func readFAFromFile(fn string) FA{
 	js, err := os.ReadFile(fn)
@@ -108,4 +81,38 @@ func readFAFromFile(fn string) FA{
 		consoleError(err.Error())
 	}
 	return fa
+}
+
+func writeFAToFile(fa FA, fn string){
+	js, _ := json.MarshalIndent(fa, "", "\t")
+	err := os.WriteFile(fn, js, 0644)
+	if err != nil{
+		consoleError(err.Error())
+	}
+}
+func nfaEmpty() FA{
+	fa, _ := NewFA(
+		[]string{"0"},
+		[]rune{},
+		[]string{},
+		"0",
+		[]string{"0"},
+	)
+	return fa
+}
+
+
+
+
+func popArg(xs []string) (string, []string){
+	if len(xs) == 0{
+		consoleError("Incorrect command usage, please look at github for more info")
+	}
+	return xs[0], xs[1:]
+}
+
+
+func consoleError(reason string){
+	fmt.Println("Error: "+reason)
+	os.Exit(0)
 }
