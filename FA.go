@@ -13,14 +13,22 @@ type FA struct {
 	EndStates          []string `json:"end_states"`
 }
 
-func NewFA(states []string, alphabet []rune, transitionFunction []string, startState string, endStates []string) FA{
+type basicError struct{
+	s string
+}
+
+func (b basicError)Error()string{
+	return b.s
+}
+
+func NewFA(states []string, alphabet []rune, transitionFunction []string, startState string, endStates []string) (FA, error){
 	blacklistRunes := []rune("+: ,~")
 	if anyInRuneList(blacklistRunes, alphabet){
-		panic("Cannot use that Alphabet, it contains blacklisted character")
+		return FA{}, basicError{"Cannot use that Alphabet, it contains blacklisted character"}
 	}
 
 	if !inList(startState, states){
-		panic("Start state not in list of States")
+		return FA{}, basicError{"Start state not in list of States"}
 	}
 
 	allEndStatesInStates := true
@@ -30,7 +38,7 @@ func NewFA(states []string, alphabet []rune, transitionFunction []string, startS
 		}
 	}
 	if !allEndStatesInStates{
-		panic("One or more of the end States does not exist in the States list")
+		return FA{}, basicError{"One or more of the end States does not exist in the States list"}
 	}
 
 	return FA{
@@ -39,7 +47,7 @@ func NewFA(states []string, alphabet []rune, transitionFunction []string, startS
 		transitionFunction,
 		startState,
 		endStates,
-	}
+	}, nil
 }
 
 func (fa FA) ToDFA() FA{
@@ -105,25 +113,25 @@ func (fa FA) ToDFA() FA{
 	return fa1
 }
 
-func (dfa FA) Evaluate(s []rune)bool{
+func (dfa FA) Evaluate(s []rune)(bool,error){
 	currentState := dfa.StartState
 	for len(s)>0{
 		if currentState == "EMPTY"{
-			return false
+			return false, nil
 		}
 		var c rune
 		c, s = popRune(s)
 		if !inRuneList(c, []rune(dfa.Alphabet)){
-			panic("Letter was not in dfa Alphabet so cannot compute")
+			return false, basicError{"Letter was not in dfa Alphabet so cannot compute"}
 		}
 		fx := currentState+","+string(c)
 		nextStates := findStates(dfa.TransitionFunction, fx)
 		if len(nextStates) != 1{
-			panic("This is not a DFA so cannot calculate")
+			return false, basicError{"This is not a DFA so cannot calculate"}
 		}
 		currentState = nextStates[0]
 	}
-	return inList(currentState, dfa.EndStates)
+	return inList(currentState, dfa.EndStates), nil
 }
 
 func (dfa FA) String() string{
